@@ -119,6 +119,16 @@
       cursor: not-allowed;
     }
 
+    .blink {
+      animation: blink 1s linear infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        background-color: #ff6347;
+      }
+    }
+
     .winner {
       font-size: 2rem;
       color: #ffd700;
@@ -239,7 +249,6 @@
     let playerNames = [];
     let currentPlayer = 1;
     let gameState = {};
-    let turnCount = 0; // For tracking the number of turns
 
     function showRules(size, players) {
       rules.style.display = "block";
@@ -285,7 +294,6 @@
         grid: Array(size * size).fill(null),
       };
       currentPlayer = 1;
-      turnCount = 0; // Reset turn count
       restartButton.style.display = "none";
 
       for (let i = 0; i < size * size; i++) {
@@ -305,15 +313,15 @@
 
       gameState.grid[index] = currentPlayer;
 
-      turnCount++; // Increment turn count
-
       if (checkWinner(gameState.grid, gameState.size, currentPlayer)) {
-        displayWinner(playerNames[currentPlayer - 1]);
+        highlightWinner(gameState.grid, gameState.size, currentPlayer);
         return;
       }
 
-      if (turnCount === gameState.size * gameState.size) {
-        displayDraw();
+      if (gameState.grid.every(cell => cell !== null)) {
+        playerTurn.innerHTML = `<span class="winner">It's a Draw!</span>`;
+        restartButton.style.display = "block";
+        disableGrid();
         return;
       }
 
@@ -324,7 +332,7 @@
     function checkWinner(grid, size, player) {
       for (let i = 0; i < size; i++) {
         if (grid.slice(i * size, (i + 1) * size).every(cell => cell === player)) {
-          return true;
+          return { type: 'row', index: i };
         }
       }
 
@@ -334,7 +342,7 @@
           column.push(grid[i + j * size]);
         }
         if (column.every(cell => cell === player)) {
-          return true;
+          return { type: 'column', index: i };
         }
       }
 
@@ -344,27 +352,133 @@
         diag1.push(grid[i * size + i]);
         diag2.push(grid[(i + 1) * (size - 1)]);
       }
-      if (diag1.every(cell => cell === player) || diag2.every(cell => cell === player)) {
-        return true;
+      if (diag1.every(cell => cell === player)) {
+        return { type: 'diagonal', index: 1 };
+      }
+      if (diag2.every(cell => cell === player)) {
+        return { type: 'diagonal', index: 2 };
       }
 
-      return false;
+      return null;
     }
 
-    function displayWinner(winner) {
-      playerTurn.innerHTML = `<span class="winner">${winner} Wins!</span>`;
-      restartButton.style.display = "block";
+    function highlightWinner(grid, size, player) {
+      const winner = checkWinner(grid, size, player);
+      let winningCells = [];
+
+      if (winner) {
+        if (winner.type === 'row') {
+          for (let i = 0; i < size; i++) {
+            const index = winner.index * size + i;
+            winningCells.push(board.children[index]);
+          }
+        } else if (winner.type === 'column') {
+          for (let i = 0; i < size; i++) {
+            const index = i * size + winner.index;
+            winningCells.push(board.children[index]);
+          }
+        } else if (winner.type === 'diagonal') {
+          for (let i = 0; i < size; i++) {
+            const index = i * size + i;
+            winningCells.push(board.children[index]);
+          }
+        }
+
+        winningCells.forEach(cell => cell.classList.add('blink'));
+
+        playerTurn.innerHTML = `<span class="winner">${playerNames[currentPlayer - 1]} Wins!</span>`;
+        restartButton.style.display = "block";
+        disableGrid();
+      }
     }
 
-    function displayDraw() {
-      playerTurn.innerHTML = `<span class="winner">Match Draw!</span>`;
-      restartButton.style.display = "block";
+    function disableGrid() {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach(cell => {
+        cell.classList.add('taken');
+        cell.removeEventListener('click', () => handleMove(cell));
+      });
     }
 
     function restartGame() {
       gameContainer.style.display = "none";
       rules.style.display = "block";
     }
+    function highlightWinner(grid, size, player) {
+    const winner = checkWinner(grid, size, player);
+    let winningCells = [];
+
+    if (winner) {
+      if (winner.type === 'row') {
+        for (let i = 0; i < size; i++) {
+          const index = winner.index * size + i;
+          winningCells.push(board.children[index]);
+        }
+      } else if (winner.type === 'column') {
+        for (let i = 0; i < size; i++) {
+          const index = i * size + winner.index;
+          winningCells.push(board.children[index]);
+        }
+      } else if (winner.type === 'diagonal') {
+        if (winner.index === 1) { // First diagonal (top-left to bottom-right)
+          for (let i = 0; i < size; i++) {
+            const index = i * (size + 1); // Diagonal from top-left to bottom-right
+            winningCells.push(board.children[index]);
+          }
+        } else { // Second diagonal (top-right to bottom-left)
+          for (let i = 0; i < size; i++) {
+            const index = (i + 1) * (size - 1); // Diagonal from top-right to bottom-left
+            winningCells.push(board.children[index]);
+          }
+        }
+      }
+
+      // Apply the blinking effect to the winning cells
+      winningCells.forEach(cell => {
+        cell.classList.add('blink');
+      });
+
+      playerTurn.innerHTML = `<span class="winner">${playerNames[currentPlayer - 1]} Wins!</span>`;
+      restartButton.style.display = "block";
+    }
+  }
+
+  function checkWinner(grid, size, player) {
+    for (let i = 0; i < size; i++) {
+      // Check rows
+      if (grid.slice(i * size, (i + 1) * size).every(cell => cell === player)) {
+        return { type: 'row', index: i };
+      }
+    }
+
+    for (let i = 0; i < size; i++) {
+      // Check columns
+      let column = [];
+      for (let j = 0; j < size; j++) {
+        column.push(grid[i + j * size]);
+      }
+      if (column.every(cell => cell === player)) {
+        return { type: 'column', index: i };
+      }
+    }
+
+    // Check diagonals
+    let diag1 = [];
+    let diag2 = [];
+    for (let i = 0; i < size; i++) {
+      diag1.push(grid[i * size + i]); // Top-left to bottom-right
+      diag2.push(grid[(i + 1) * (size - 1)]); // Top-right to bottom-left
+    }
+    if (diag1.every(cell => cell === player)) {
+      return { type: 'diagonal', index: 1 };
+    }
+    if (diag2.every(cell => cell === player)) {
+      return { type: 'diagonal', index: 2 };
+    }
+
+    return null;
+  }
+
   </script>
 </body>
 </html>
