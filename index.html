@@ -32,6 +32,9 @@
 
     #menu {
       margin: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
     }
 
     #menu button {
@@ -207,6 +210,7 @@
 <body>
   <h1>Tic Tac Toe</h1>
   <div id="menu">
+    <button onclick="showRules(3, 2)">Two Players (3x3)</button>
     <button onclick="showRules(4, 2)">Two Players (4x4)</button>
     <button onclick="showRules(6, 4)">Four Players (6x6)</button>
   </div>
@@ -235,6 +239,7 @@
     let playerNames = [];
     let currentPlayer = 1;
     let gameState = {};
+    let turnCount = 0; // For tracking the number of turns
 
     function showRules(size, players) {
       rules.style.display = "block";
@@ -280,6 +285,7 @@
         grid: Array(size * size).fill(null),
       };
       currentPlayer = 1;
+      turnCount = 0; // Reset turn count
       restartButton.style.display = "none";
 
       for (let i = 0; i < size * size; i++) {
@@ -299,8 +305,15 @@
 
       gameState.grid[index] = currentPlayer;
 
+      turnCount++; // Increment turn count
+
       if (checkWinner(gameState.grid, gameState.size, currentPlayer)) {
         displayWinner(playerNames[currentPlayer - 1]);
+        return;
+      }
+
+      if (turnCount === gameState.size * gameState.size) {
+        displayDraw();
         return;
       }
 
@@ -340,6 +353,11 @@
 
     function displayWinner(winner) {
       playerTurn.innerHTML = `<span class="winner">${winner} Wins!</span>`;
+      restartButton.style.display = "block";
+    }
+
+    function displayDraw() {
+      playerTurn.innerHTML = `<span class="winner">Match Draw!</span>`;
       restartButton.style.display = "block";
     }
 
