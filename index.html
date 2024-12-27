@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #222;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      margin: 20px;
+      font-size: 3rem;
+      color: #ffd700;
+      animation: glow 1.5s infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 5px #ffd700, 0 0 10px #ff6347, 0 0 15px #ffa500;
+      }
+      to {
+        text-shadow: 0 0 10px #ffa500, 0 0 20px #ff6347, 0 0 30px #ffd700;
+      }
+    }
+
+    #menu {
+      margin: 20px;
+    }
+
+    #menu button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(45deg, #ff7e5f, #feb47b);
+      color: white;
+      transition: transform 0.2s;
+    }
+
+    #menu button:hover {
+      transform: scale(1.1);
+    }
+
+    #rules {
+      margin: 20px;
+      display: none;
+      text-align: left;
+      padding: 20px;
+      border: 2px solid #ff6347;
+      background-color: #444;
+      border-radius: 10px;
+    }
+
+    .input-container {
+      margin: 20px;
+    }
+
+    .input-container input {
+      padding: 10px;
+      margin: 5px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    #start-game {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(45deg, #24c6dc, #514a9d);
+      color: white;
+      cursor: pointer;
+    }
+
+    #game-container {
+      display: none;
+      justify-content: center;
+    }
+
+    #board {
+      display: grid;
+      gap: 5px;
+    }
+
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #72edf2, #5151e5);
+      border: 2px solid #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.3s;
+    }
+
+    .cell:hover {
+      transform: scale(1.1);
+      background-color: #feb47b;
+    }
+
+    .cell.taken {
+      cursor: not-allowed;
+    }
+
+    .winner {
+      font-size: 2rem;
+      color: #ffd700;
+      animation: glow 1.5s infinite alternate;
+    }
+
+    #restart {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(45deg, #34e89e, #0f3443);
+      color: white;
+      cursor: pointer;
+    }
+
+    #player-turn {
+      margin: 20px;
+      font-size: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .cell {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      #menu button {
+        font-size: 1rem;
+        padding: 10px 20px;
+      }
+
+      #rules {
+        font-size: 0.9rem;
+      }
+
+      #start-game {
+        font-size: 1rem;
+      }
+
+      #restart {
+        font-size: 1rem;
+      }
+
+      #player-turn {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .cell {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      #menu button {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+      }
+
+      #rules {
+        font-size: 0.8rem;
+      }
+
+      #start-game {
+        font-size: 0.9rem;
+      }
+
+      #restart {
+        font-size: 0.9rem;
+      }
+
+      #player-turn {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  <div id="menu">
+    <button onclick="showRules(4, 2)">Two Players (4x4)</button>
+    <button onclick="showRules(6, 4)">Four Players (6x6)</button>
+  </div>
+
+  <div id="rules">
+    <h2>Rules</h2>
+    <p>Align your symbols in a row, column, or diagonal to win.</p>
+    <p>Enter player names to start the game.</p>
+    <div class="input-container" id="player-inputs"></div>
+    <button id="start-game" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="player-turn"></div>
+
+  <div id="game-container">
+    <div id="board"></div>
+    <button id="restart" onclick="restartGame()" style="display:none;">Restart Game</button>
+  </div>
+
+  <script>
+    const board = document.getElementById("board");
+    const rules = document.getElementById("rules");
+    const gameContainer = document.getElementById("game-container");
+    const playerTurn = document.getElementById("player-turn");
+    const restartButton = document.getElementById("restart");
+    let playerNames = [];
+    let currentPlayer = 1;
+    let gameState = {};
+
+    function showRules(size, players) {
+      rules.style.display = "block";
+      rules.dataset.size = size;
+      rules.dataset.players = players;
+
+      const inputs = document.getElementById("player-inputs");
+      inputs.innerHTML = "";
+      for (let i = 1; i <= players; i++) {
+        inputs.innerHTML += `<input type='text' id='player${i}' placeholder='Enter Player ${i} Name'>`;
+      }
+    }
+
+    function startGame() {
+      const size = parseInt(rules.dataset.size);
+      const players = parseInt(rules.dataset.players);
+
+      playerNames = [];
+      for (let i = 1; i <= players; i++) {
+        const nameInput = document.getElementById(`player${i}`);
+        if (nameInput.value.trim() === "") {
+          alert(`Player ${i} name cannot be empty!`);
+          return;
+        }
+        playerNames.push(nameInput.value.trim());
+      }
+
+      rules.style.display = "none";
+      gameContainer.style.display = "flex";
+
+      initializeGame(size, players);
+      playerTurn.textContent = `${playerNames[currentPlayer - 1]}'s Turn`;
+    }
+
+    function initializeGame(size, players) {
+      board.innerHTML = "";
+      board.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+      board.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+
+      gameState = {
+        size: size,
+        players: players,
+        grid: Array(size * size).fill(null),
+      };
+      currentPlayer = 1;
+      restartButton.style.display = "none";
+
+      for (let i = 0; i < size * size; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.addEventListener("click", () => handleMove(cell, i));
+        board.appendChild(cell);
+      }
+    }
+
+    function handleMove(cell, index) {
+      if (cell.classList.contains("taken")) return;
+
+      const symbol = playerNames[currentPlayer - 1][0].toUpperCase();
+      cell.textContent = symbol;
+      cell.classList.add("taken");
+
+      gameState.grid[index] = currentPlayer;
+
+      if (checkWinner(gameState.grid, gameState.size, currentPlayer)) {
+        displayWinner(playerNames[currentPlayer - 1]);
+        return;
+      }
+
+      currentPlayer = (currentPlayer % gameState.players) + 1;
+      playerTurn.textContent = `${playerNames[currentPlayer - 1]}'s Turn`;
+    }
+
+    function checkWinner(grid, size, player) {
+      for (let i = 0; i < size; i++) {
+        if (grid.slice(i * size, (i + 1) * size).every(cell => cell === player)) {
+          return true;
+        }
+      }
+
+      for (let i = 0; i < size; i++) {
+        let column = [];
+        for (let j = 0; j < size; j++) {
+          column.push(grid[i + j * size]);
+        }
+        if (column.every(cell => cell === player)) {
+          return true;
+        }
+      }
+
+      let diag1 = [];
+      let diag2 = [];
+      for (let i = 0; i < size; i++) {
+        diag1.push(grid[i * size + i]);
+        diag2.push(grid[(i + 1) * (size - 1)]);
+      }
+      if (diag1.every(cell => cell === player) || diag2.every(cell => cell === player)) {
+        return true;
+      }
+
+      return false;
+    }
+
+    function displayWinner(winner) {
+      playerTurn.innerHTML = `<span class="winner">${winner} Wins!</span>`;
+      restartButton.style.display = "block";
+    }
+
+    function restartGame() {
+      gameContainer.style.display = "none";
+      rules.style.display = "block";
+    }
+  </script>
+</body>
+</html>
